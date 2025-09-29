@@ -5,6 +5,7 @@ namespace App\Service;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use App\Http\Dto\MessageDto;
 
 class GoogleExcelService
 {
@@ -26,8 +27,7 @@ class GoogleExcelService
      * file folder path: "/Files/Export"
      */
 
-    public function downloadLastFourExcels()
-    {
+    public function downloadLastFourExcels(){
         $today = Carbon::today()->format('Ymd');
         
         $files = Storage::disk('local')->files("files");        
@@ -35,29 +35,24 @@ class GoogleExcelService
             $lastModified = Storage::disk('local')->lastModified($file);
             $lastModifiedDate = \Carbon\Carbon::createFromTimestamp($lastModified)->format('Ymd');
             return $lastModifiedDate === $today;
-        });
+        });      
 
-      //  echo "Archivos hoy: " . $todayFiles->count() . "<br>";
-
-        if ($todayFiles->isNotEmpty()) {     
-            return "Se encontraron archivos del día actual en storage/app/files";
-        }
-        //verificar que no llame los excles
-        $this->getExcelByIdInDrive();
-        $this->renameExcels();        
-        return "Se descargaron y renombraron archivos nuevos";
+        if ($todayFiles->isNotEmpty()) {
+            return response()->json(['status' => 404, 'message' => "Se encontraron archivos del día actual en storage/app/files"]);
+        }else{
+            $this->getExcelByIdInDrive();                   
+            $this->renameExcels();
+        }        
+        return response()->json(['status' => 200, 'message' => 'Se descargaron y renombraron los archivos correctamente']);        
     }
     
-    private function renameExcels()
-    {
-        $files = Storage::disk('local')->files("files");
-
+    private function renameExcels(){
+        $files = Storage::disk('local')->files("private/files");    
         foreach ($files as $filePath) {           
             $fileName = basename($filePath);
             $baseName = preg_replace('/\d+(_\d+)*$/', '', pathinfo($fileName, PATHINFO_FILENAME));
             $newName = $baseName . ".xlsx";
-
-            // Evitar sobreescribir: si ya existe, se reemplaza
+            
             Storage::disk('local')->move($filePath, "files/$newName");
         }
     }

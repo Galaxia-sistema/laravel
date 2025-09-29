@@ -2,12 +2,13 @@
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\ApiGoogleController;
 use Illuminate\Support\Facades\Route;
-
+use App\Service\GoogleExcelService;
 
 Route::prefix('api')->group(function () {
 
    Route::get('/excels/{file}', [ApiGoogleController::class, 'getExcel']);
 
+   Route::get('/test', [GoogleExcelService::class, 'downloadLastFourExcels']);
 
 });
 #Route::delete('/usuarios/{id}/eliminado', [UsuariosController::class, 'eliminarUser'])->name('eliminar.usuario');
